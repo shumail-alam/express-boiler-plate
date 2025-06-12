@@ -1,6 +1,5 @@
 import { HttpError } from "@/lib/fn-error";
 import { asyncWrapper } from "@/lib/fn-wrapper";
-import type { Request, Response } from "express";
 
 export const signup = asyncWrapper(async (req, res, next) => {
   try {

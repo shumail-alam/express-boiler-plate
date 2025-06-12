@@ -5,6 +5,7 @@ import { globalErrorHandler } from "./utils/error-middleware";
 const app = express();
 // middleware chain here
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use("/api/v1/auth", authRouter);
 
 // global error handler must be at the bottom of the midldeware chain
