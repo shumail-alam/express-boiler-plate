@@ -1,59 +1,44 @@
-import { HttpError } from "@/lib/fn-error";
-import { asyncWrapper } from "@/lib/fn-wrapper";
-import { registerEntity } from "../dto/auth.dto";
-import { hash } from "bcryptjs";
-import pool from "../../../adapters/postgres/postgres.adapter";
+import { Request, Response, NextFunction } from "express";
+import pool from "@/adapters/postgres/postgres.adapter";
+import { generateAccessToken, generateRefreshToken } from "../../../utils/jwt";
+import bcrypt from "bcrypt";
 
-export const signup = asyncWrapper(async (req, res, next) => {
-  const parsed = registerEntity.safeParse(req.body);
-
-  if (!parsed.success) {
-    return next(new HttpError("Invalid input: " + JSON.stringify(parsed.error.format()), 400));
-  }
-
-  const { name, email, password } = parsed.data;
-
-  // console.log(parsed)
-
+export const registerUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const { name, email, password } = req.body;
   try {
-    // Verify database connection first
-    await pool.query('SELECT NOW()');
-    
-    // Check for existing user
     const existingUser = await pool.query(
-      "SELECT id FROM users WHERE email = $1", 
+      "SELECT * FROM users WHERE email = $1",
       [email]
     );
-
     if (existingUser.rows.length > 0) {
-      return next(new HttpError("Email already registered", 409));
+      res.status(409).json({ message: "Email already exists" });
+      return;
     }
-
-    const hashedPassword = await hash(password, 10);
-
-    // Insert new user
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
     const result = await pool.query(
-      `INSERT INTO users (name, email, password) 
-       VALUES ($1, $2, $3) 
-       RETURNING id, email, name`,
+      "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id, name, email",
       [name, email, hashedPassword]
     );
-
-    if (result.rows.length === 0) {
-      throw new Error('Insertion failed');
-    }
-
-    res.status(201).json({ 
-      message: "User registered successfully",
-      user: {
-        id: result.rows[0].id,
-        name: result.rows[0].name,
-        email: result.rows[0].email
-      }
+    const user = result.rows[0];
+    const accessToken = generateAccessToken({ id: user.id, email: user.email });
+    const refreshToken = generateRefreshToken({ id: user.id, email: user.email });
+    console.log("Refresh Token:", refreshToken);
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false, 
+      sameSite: "strict",
     });
-
-  } catch (err) {
-    console.error('Database error:', err);
-    return next(new HttpError("Registration failed", 500));
+    res.status(201).json({
+      message: "User registered successfully",
+      accessToken,
+      user,
+    });
+  } catch (error) {
+    next(error);
   }
-});
+};
