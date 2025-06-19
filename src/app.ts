@@ -1,13 +1,15 @@
 import express from "express";
-import { authRouter } from "./modules/auth/routes/auth.routes";
-import { globalErrorHandler } from "./utils/error-middleware";
-
+import cookieParser from "cookie-parser";
+import authRouter from "./modules/auth/routes/auth.routes";
 const app = express();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/v1/auth", authRouter);
-app.use(globalErrorHandler);
+app.use(express.json());
+app.use(cookieParser());
+
+app.use("/api", authRouter);
+
+
+
 
 export default app;
