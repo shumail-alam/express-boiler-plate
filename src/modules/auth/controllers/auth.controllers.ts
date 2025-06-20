@@ -38,4 +38,4 @@ export const refresh = (req: Request, res: Response, next: NextFunction): void =
 
 export const protectedRoute = (_req: Request, res: Response): void => {
   res.status(200).json({ message: "Access granted to protected route" });
-};
+};  
