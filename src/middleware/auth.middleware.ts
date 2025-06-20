@@ -6,16 +6,18 @@ export const protect = (
   res: Response,
   next: NextFunction
 ): void => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    res.status(401).json({ message: "No token provided" });
+    return;
+  }
+
+  const token = authHeader.split(" ")[1];
+
   try {
-    const token = req.headers.authorization?.split(" ")[1];
-
-    if (!token) {
-      res.status(401).json({ message: "No token provided" });
-      return;
-    }
-
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!);
-    (req as any).user = decoded; 
+    (req as any).user = decoded;
     next();
   } catch (error) {
     res.status(401).json({ message: "Unauthorized" });

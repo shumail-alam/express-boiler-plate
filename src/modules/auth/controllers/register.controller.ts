@@ -9,8 +9,9 @@ export const registerUser = async (
   next: NextFunction
 ): Promise<void> => {
   const { name, email, password } = req.body;
+  const client = await pool.connect();
   try {
-    const existingUser = await pool.query(
+    const existingUser = await client.query(
       "SELECT * FROM users WHERE email = $1",
       [email]
     );
@@ -18,21 +19,25 @@ export const registerUser = async (
       res.status(409).json({ message: "Email already exists" });
       return;
     }
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    
-    const result = await pool.query(
+    const result = await client.query(
       "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id, name, email",
       [name, email, hashedPassword]
     );
+
     const user = result.rows[0];
     const accessToken = generateAccessToken({ id: user.id, email: user.email });
     const refreshToken = generateRefreshToken({ id: user.id, email: user.email });
+
     console.log("Refresh Token:", refreshToken);
+
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: false, 
+      secure: false,
       sameSite: "strict",
     });
+
     res.status(201).json({
       message: "User registered successfully",
       accessToken,
@@ -40,5 +45,7 @@ export const registerUser = async (
     });
   } catch (error) {
     next(error);
+  } finally {
+    client.release(); 
   }
 };
