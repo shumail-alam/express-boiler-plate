@@ -1,18 +1,19 @@
 import { Router } from "express";
 import asyncHandler from "express-async-handler";
-import { registerUser } from "../controllers/register.controller";
-import { refresh, protectedRoute } from "../controllers/auth.controllers";
+import { registerUser } from "../../../modules/auth/controllers/auth/register.controller";
+import {refresh , protectedRoute } from "../../auth/controllers/auth/auth.controller"
 import { protect } from "../../../middleware/auth.middleware";
+import { loginUser } from "../../../modules/auth/controllers/auth/login.controller";
 
-import { createExpense, getUserExpenses } from "../../expense/expense.controller";
-const authRouter = Router();
+const authRouter = Router();  
 
 authRouter.post("/register", asyncHandler(registerUser));
 authRouter.post("/refresh", asyncHandler(refresh));
 authRouter.get("/protected", protect, asyncHandler(protectedRoute));
+authRouter.post("/login", loginUser);
 
 
-authRouter.post("/expenses", protect, asyncHandler(createExpense));
-authRouter.get("/expenses", protect, asyncHandler(getUserExpenses));
+
+
 
 export default authRouter;
