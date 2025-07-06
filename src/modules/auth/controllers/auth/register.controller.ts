@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import pool from "@/adapters/postgres/postgres.adapter";
-import { generateAccessToken, generateRefreshToken } from "../../../utils/jwt";
+import { generateAccessToken, generateRefreshToken } from "../../../../utils/jwt";
 import bcrypt from "bcrypt";
 
 export const registerUser = async (
@@ -9,7 +9,7 @@ export const registerUser = async (
   next: NextFunction
 ): Promise<void> => {
   const { name, email, password } = req.body;
-  const client = await pool.connect();
+  const client = await pool.connect();  
   try {
     const existingUser = await client.query(
       "SELECT * FROM users WHERE email = $1",
@@ -26,7 +26,7 @@ export const registerUser = async (
       [name, email, hashedPassword]
     );
 
-    const user = result.rows[0];
+    const user = result.rows[0];  
     const accessToken = generateAccessToken({ id: user.id, email: user.email });
     const refreshToken = generateRefreshToken({ id: user.id, email: user.email });
 

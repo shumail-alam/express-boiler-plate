@@ -6,4 +6,9 @@ export const registerEntity = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
 });
 
+export const refreshTokenSchema = z.object({
+    refreshToken: z.string().nonempty({ message: "Refresh token is required" }),
+  });
+
 export type registerDTO = z.infer<typeof registerEntity>;
+export type refreshTokenDTO = z.infer<typeof refreshTokenSchema>;
